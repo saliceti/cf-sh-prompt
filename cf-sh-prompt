@@ -1,16 +1,40 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
+
+CONFIG=~/.cf/config.json
+
+extract() {
+  regex=$1
+  position=${2:-1}
+
+  if [[ ! -f "${CONFIG}" ]]; then
+    echo "${CONFIG}" not found. Please configure 'cf' first.
+    return
+  fi
+  i=1
+  while read -r line; do
+    if [[ $line =~ $regex ]]; then
+      if [[ "${i}" = "${position}" ]]; then
+        echo "${BASH_REMATCH[1]}"
+        break
+      else
+        i=$((i+1))
+      fi
+    fi
+  done < "${CONFIG}"
+}
+
 __cf_api_endpoint() {
-	cf target | awk '/^API endpoint:/ {print $3;}'
+  extract \"Target\":\ \"https?://\([^\"]+\)\"
 }
 
 __cf_user() {
-	cf target | awk '/^User:/ {print $2;}'
+  cf target | awk '/^User:/ {print $2;}'
 }
 
 __cf_org() {
-	cf target | awk '/^Org:/ {print $2;}'
+  extract \"Name\":\ \"\([^\"]+\)\",
 }
 
 __cf_space() {
-	cf target | awk '/^Space:/ {print $2;}'
+  extract \"Name\":\ \"\([^\"]+\)\", 2
 }
