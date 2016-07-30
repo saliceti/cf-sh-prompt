@@ -28,7 +28,20 @@ __cf_api_endpoint() {
 }
 
 __cf_user() {
-  cf target | awk '/^User:/ {print $2;}'
+  encoded=$(extract \"AccessToken\":\ \"bearer\ [^\.]+\.\([^\.]+\)\.[^\.]+\")
+  case $((${#encoded} % 4)) in
+  2)
+    suffix='=='
+    ;;
+  3)
+    suffix='='
+    ;;
+  esac
+  decoded=$(openssl base64 -d -A <<< "${encoded}${suffix}")
+
+  if [[ $decoded =~ \"email\":\"([^\"]+)\" ]]; then
+    echo "${BASH_REMATCH[1]}"
+  fi
 }
 
 __cf_org() {
